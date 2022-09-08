@@ -42,6 +42,8 @@ long long lastReadPotentiometer;
 long long readPotentiometerDelay=100; // 100 ms
 long long lastReadIMU;
 long long readIMUDelay=10; // 10 ms
+long long lastCheckGlove;
+long long checkDelay = 700;
 
 // calibrate potentiometer
 int finger0min = 27000;
@@ -66,7 +68,7 @@ float quat_x = 0.0F;
 float quat_y = 0.0F;
 float quat_z = 0.0F;
 
-// offset sensor imu
+// sensor imu
 float acc[3];
 float accOffset[3];
 float gyro[3];
@@ -78,10 +80,12 @@ float magmin[3];
 uint8_t setup_flag = 1;
 uint8_t action_flag = 1;
 float heading = 0;
-
 uint8_t smoothen = 100;
 float strength = 1;
 
+// grasp
+boolean robotGraspState = false;
+boolean gloveGraspState = false;
 
 // funtion prototype
 void update();
@@ -102,6 +106,7 @@ void IMU_Update();
 void updateSendMQTTGyro();
 void updateReadIMU();
 void updateReCalibrate();
+void updateGrasp();
 
 void setup() {
 
@@ -161,11 +166,12 @@ void loop() {
 void update(){
   M5.update();
   updateMQTT();
-  // updateReadPotentiometer();
+  updateReadPotentiometer();
   // updateSendMQTTfinger();
-  updateReCalibrate();
-  updateSendMQTTGyro();
-  updateReadIMU();
+  // updateReCalibrate();
+  // updateSendMQTTGyro();
+  // updateReadIMU();
+  updateGrasp();
 }
 
 void getChipID(){
@@ -178,9 +184,25 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (int i=0;i<length;i++) {
-    Serial.print((char)payload[i]);
+
+  // payload -> string
+  String message = "";
+  for (int i = 0; i < length; i++) {
+    message += (char)payload[i];
   }
+  
+  // topic -> string
+  String topicStr = String(topic);
+
+  if(topicStr == "KMITL-02/grippingStatus"){
+    if(message == "graspOk"){
+      robotGraspState = true;
+    }
+    else if(message == "graspFail"){
+      robotGraspState = false;
+    }
+  }
+
   Serial.println();
 }
 
@@ -203,6 +225,10 @@ void mqttSetup(){
   mqtt.setCallback(callback);
   if (mqtt.connect("M5-KMITL-02", mqtt_user, mqtt_password)) {
     Serial.println("connected");
+
+    // subscribe to topic
+    mqtt.subscribe("KMITL-02/grippingStatus");
+
   } else {
     Serial.print("failed, rc=");
     Serial.print(mqtt.state());
@@ -237,6 +263,16 @@ void readPotentiometer(){
   finger1 = map(adc1, finger1min, finger1max, 0, 1024);
   finger2 = map(adc2, finger2min, finger2max, 0, 1024);
   finger3 = map(adc3, finger3min, finger3max, 0, 1024);
+
+  // print value
+  // Serial.print("Finger 0: ");
+  // Serial.print(finger0);
+  // Serial.print(" | Finger 1: ");
+  // Serial.print(finger1);
+  // Serial.print(" | Finger 2: ");
+  // Serial.print(finger2);
+  // Serial.print(" | Finger 3: ");
+  // Serial.println(finger3);
   
 }
 
@@ -481,6 +517,31 @@ void updateReCalibrate(){
     // reset esp32
     Serial.println("Reset ESP32");
     ESP.restart();
+  }
+}
+
+void updateGrasp(){
+  if ((millis()-lastCheckGlove)>=checkDelay){
+    // Serial.println(finger0+finger1+finger2+finger3);
+    if ((finger0+finger1+finger2+finger3)>=1400){
+      gloveGraspState = true;
+      // Serial.println("grasp!");
+      // make json
+      JSONVar packageJSON;
+      packageJSON["gripper"] = "on";
+      String packageString = JSON.stringify(packageJSON);
+
+      mqtt.publish("KMITL-02/gripper", packageString.c_str());
+    }
+    lastCheckGlove = millis();
+    // else {
+    //   // make json
+    //   JSONVar packageJSON;
+    //   packageJSON["gripper"] = "off";
+    //   String packageString = JSON.stringify(packageJSON);
+
+    //   mqtt.publish("KMITL-02/gripper", packageString.c_str());
+    // }
   }
 }
 
