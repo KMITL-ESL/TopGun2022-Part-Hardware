@@ -35,7 +35,7 @@ Madgwick_Quaternion M_Q_Filter;
 
 // millis
 long long lastSend;
-long long sendDelay=500; // 100 ms
+long long sendDelay=400; // 100 ms
 long long lastMqttReconnect;
 long long mqttReconnectDelay=5000; // 5 s
 long long lastReadPotentiometer;
@@ -118,22 +118,22 @@ void setup() {
   M5.Lcd.println("Connecting to " + String(ssid) + "...");
 
   // connect to wifi
-  // WiFi.begin(ssid, password);
-  // while (WiFi.status() != WL_CONNECTED) {
-  //   delay(500);
-  //   M5.Lcd.print(".");
-  // }
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    M5.Lcd.print(".");
+  }
 
   // display wifi connected
-  // M5.Lcd.println("Connected");
-  // M5.Lcd.println("IP address: " + WiFi.localIP().toString());
+  M5.Lcd.println("Connected");
+  M5.Lcd.println("IP address: " + WiFi.localIP().toString());
 
   // connect to mqtt
-  // mqttSetup();
+  mqttSetup();
 
   // display mqtt connected
-  // M5.Lcd.println("MQTT connected");
-  // M5.Lcd.println("Chip ID: " + String(chipId));
+  M5.Lcd.println("MQTT connected");
+  M5.Lcd.println("Chip ID: " + String(chipId));
 
   // start ads1115
   ads.begin();
@@ -160,7 +160,7 @@ void loop() {
 
 void update(){
   M5.update();
-  // updateMQTT();
+  updateMQTT();
   // updateReadPotentiometer();
   // updateSendMQTTfinger();
   updateReCalibrate();
@@ -232,32 +232,11 @@ void readPotentiometer(){
   adc2 = ads.readADC_SingleEnded(2);
   adc3 = ads.readADC_SingleEnded(3);
 
-  // // print raw value
-  // Serial.print("Finger 0: ");
-  // Serial.print(adc0);
-  // Serial.print(" | Finger 1: ");
-  // Serial.print(adc1);
-  // Serial.print(" | Finger 2: ");
-  // Serial.print(adc2);
-  // Serial.print(" | Finger 3: ");
-  // Serial.println(adc3);
-
   // map value to 0-1024
   finger0 = map(adc0, finger0min, finger0max, 0, 1024);
   finger1 = map(adc1, finger1min, finger1max, 0, 1024);
   finger2 = map(adc2, finger2min, finger2max, 0, 1024);
   finger3 = map(adc3, finger3min, finger3max, 0, 1024);
-
-  // // print value
-  // Serial.print("Finger 0: ");
-  // Serial.println(finger0);
-  // Serial.print("Finger 1: ");
-  // Serial.println(finger1);
-  // Serial.print("Finger 2: ");
-  // Serial.println(finger2);
-  // Serial.print("Finger 3: ");
-  // Serial.println(finger3);
-  // Serial.println("----------------");
   
 }
 
@@ -300,16 +279,91 @@ void sendMQTTGyro(){
   // Serial.print(quat_y);
   // Serial.print("\tquat_z: ");
   // Serial.println(quat_z);
-  
-  // // make json string
-  // JSONVar packageJSON;
-  // packageJSON["x"] = gyroX;
-  // packageJSON["y"] = gyroY;
-  // packageJSON["z"] = gyroZ;
-  // String packageString = JSON.stringify(packageJSON);
-  // Serial.println(packageString);
-  // mqtt.publish("KMITL-02/gyro", packageString.c_str());
-  // Serial.println("Send gyro");
+
+  // up
+  if (quat_x > 0.35 && quat_y < 0.35 && quat_y > -0.35 && quat_z < 0.35 && quat_z > -0.35) {
+    Serial.println("up");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = 0;
+    packageJSON["dY"] = 0;
+    packageJSON["dZ"] = 0.01;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
+  // down
+  else if (quat_x < -0.35 && quat_y < 0.35 && quat_y > -0.35 && quat_z < 0.35 && quat_z > -0.35) {
+    Serial.println("down");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = 0;
+    packageJSON["dY"] = 0;
+    packageJSON["dZ"] = -0.01;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
+  // left
+  else if (quat_y < -0.35 && quat_x < 0.35 && quat_x > -0.35 && quat_z < 0.35 && quat_z > -0.35) {
+    Serial.println("left");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = 0;
+    packageJSON["dY"] = 0.01;
+    packageJSON["dZ"] = 0;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
+  // right
+  else if (quat_y > 0.35 && quat_x < 0.35 && quat_x > -0.35 && quat_z < 0.35 && quat_z > -0.35) {
+    Serial.println("right");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = 0;
+    packageJSON["dY"] = -0.01;
+    packageJSON["dZ"] = 0;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
+  // forward
+  else if (quat_z > 0.35 && quat_x < 0.35 && quat_x > -0.35 && quat_y < 0.35 && quat_y > -0.35) {
+    Serial.println("forward");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = 0.01;
+    packageJSON["dY"] = 0;
+    packageJSON["dZ"] = 0;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
+  // backward
+  else if (quat_z < -0.35 && quat_x < 0.35 && quat_x > -0.35 && quat_y < 0.35 && quat_y > -0.35) {
+    Serial.println("backward");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = -0.01;
+    packageJSON["dY"] = 0;
+    packageJSON["dZ"] = 0;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
+  // stop
+  else {
+    Serial.println("stop");
+    // make json string
+    JSONVar packageJSON;
+    packageJSON["dX"] = 0;
+    packageJSON["dY"] = 0;
+    packageJSON["dZ"] = 0;
+    String packageString = JSON.stringify(packageJSON);
+
+    mqtt.publish("KMITL-02/arm", packageString.c_str());
+  }
 }
 
 void calibrate6886(){
@@ -318,41 +372,6 @@ void calibrate6886(){
   int counter = 5;
 
   Serial.println("Calibrating...");
-
-  // for (int i = 0; i < counter; i++) {
-  //   M5.Imu.getGyroData(&gyro[0], &gyro[1], &gyro[2]);
-  //   M5.Imu.getAccelData(&acc[0], &acc[1], &acc[2]);
-
-  //   // Serial.print("gyro[0]: ");
-  //   // Serial.print(gyro[0]);
-  //   // Serial.print(" | gyro[1]: ");
-  //   // Serial.print(gyro[1]);
-  //   // Serial.print(" | gyro[2]: ");
-  //   // Serial.println(gyro[2]);
-  //   // Serial.print("acc[0]: ");
-  //   // Serial.print(acc[0]);
-  //   // Serial.print(" | acc[1]: ");
-  //   // Serial.print(acc[1]);
-  //   // Serial.print(" | acc[2]: ");
-  //   // Serial.println(acc[2]);
-
-  //   gyroSum[0] += gyro[0];
-  //   gyroSum[1] += gyro[1];
-  //   gyroSum[2] += gyro[2];
-  //   accSum[0] += acc[0];
-  //   accSum[1] += acc[1];
-  //   accSum[2] += acc[2];
-
-  //   // clear value
-  //   gyro[0] = 0;
-  //   gyro[1] = 0;
-  //   gyro[2] = 0;
-  //   acc[0] = 0;
-  //   acc[1] = 0;
-  //   acc[2] = 0;
-
-  //   delay(2);
-  // }
 
   M5.Imu.getGyroData(&gyro[0], &gyro[1], &gyro[2]);
   M5.Imu.getAccelData(&acc[0], &acc[1], &acc[2]);
@@ -407,57 +426,12 @@ void applycalibration(){
   M5.Imu.getGyroData(&gyro[0], &gyro[1], &gyro[2]);
   M5.Imu.getAccelData(&acc[0], &acc[1], &acc[2]);
 
-  // print raw value
-  // Serial.println("Raw Value");
-  // Serial.print("gyro[0]: ");
-  // Serial.print(gyro[0]);
-  // Serial.print(" | gyro[1]: ");
-  // Serial.print(gyro[1]);
-  // Serial.print(" | gyro[2]: ");
-  // Serial.println(gyro[2]);
-  // Serial.print("acc[0]: ");
-  // Serial.print(acc[0]);
-  // Serial.print(" | acc[1]: ");
-  // Serial.print(acc[1]);
-  // Serial.print(" | acc[2]: ");
-  // Serial.println(acc[2]);
-
-
   gyro[0] -= gyroOffset[0];
   gyro[1] -= gyroOffset[1];
   gyro[2] -= gyroOffset[2];
   acc[0] -= accOffset[0];
   acc[1] -= accOffset[1];
   acc[2] -= accOffset[2];
-
-  // print offset value
-  // Serial.println("Offset Value");
-  // Serial.print("gyroOffset[0]: ");
-  // Serial.print(gyroOffset[0]);
-  // Serial.print(" | gyroOffset[1]: ");
-  // Serial.print(gyroOffset[1]);
-  // Serial.print(" | gyroOffset[2]: ");
-  // Serial.println(gyroOffset[2]);
-  // Serial.print("accOffset[0]: ");
-  // Serial.print(accOffset[0]);
-  // Serial.print(" | accOffset[1]: ");
-  // Serial.print(accOffset[1]);
-  // Serial.print(" | accOffset[2]: ");
-  // Serial.println(accOffset[2]);
-
-  // Serial.println("Calibrated Value");
-  // Serial.print("gyro[0]: ");
-  // Serial.print(gyro[0]);
-  // Serial.print(" | gyro[1]: ");
-  // Serial.print(gyro[1]);
-  // Serial.print(" | gyro[2]: ");
-  // Serial.println(gyro[2]);
-  // Serial.print("acc[0]: ");
-  // Serial.print(acc[0]);
-  // Serial.print(" | acc[1]: ");
-  // Serial.print(acc[1]);
-  // Serial.print(" | acc[2]: ");
-  // Serial.println(acc[2]);
 
   //fake magnetometer data cuz MPU6886 doesn't come with BMM 150 chip
   mag[0] = 0;
@@ -486,12 +460,12 @@ void IMU_Update() {
   quat_y = M_Q_Filter.getQuat_Y();
   quat_z = M_Q_Filter.getQuat_Z(); //-0.005 anti yaw drifting
 
-  Serial.print("quat_x: ");
-  Serial.print(quat_x);
-  Serial.print("\tquat_y: ");
-  Serial.print(quat_y);
-  Serial.print("\tquat_z: ");
-  Serial.println(quat_z);
+  // Serial.print("quat_x: ");
+  // Serial.print(quat_x);
+  // Serial.print("\tquat_y: ");
+  // Serial.print(quat_y);
+  // Serial.print("\tquat_z: ");
+  // Serial.println(quat_z);
 }
 
 void updateReadIMU(){
