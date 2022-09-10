@@ -19,11 +19,11 @@
 #define SERVOMAX 600 // Maximum pulse length count out of 4096.
 
 // config network
-const char* ssid = "GM";
-const char* password = "gm969/13";
+const char* ssid = "your ssid";
+const char* password = "your password";
 
 // config mqtt
-const char* mqtt_server = "154.215.14.239";
+const char* mqtt_server = "your mqtt server";
 const char* mqtt_user = "KMITL-02";
 const char* mqtt_password = "KMITL-02";
 const char* mqtt_port = "1883";
