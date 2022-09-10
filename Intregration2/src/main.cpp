@@ -199,17 +199,6 @@ void setup() {
     pwmServo.setPWM(servoNo3, 0, pulselen);
   }
 
-  // delay(5000);
-
-  // //set servo to 90
-  // for (int pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--)
-  // {
-  //   pwmServo.setPWM(servoNo0, 0, pulselen);
-  //   pwmServo.setPWM(servoNo1, 0, pulselen);
-  //   pwmServo.setPWM(servoNo2, 0, pulselen);
-  //   pwmServo.setPWM(servoNo3, 0, pulselen);
-  // }
-
   // display ready
   M5.Lcd.println("Ready");
 }
@@ -371,15 +360,6 @@ void updateSendMQTTGyro(){
 }
 
 void sendMQTTGyro(){
-  
-  // print value
-  // Serial.print("quat_x: ");
-  // Serial.print(quat_x);
-  // Serial.print("\tquat_y: ");
-  // Serial.print(quat_y);
-  // Serial.print("\tquat_z: ");
-  // Serial.println(quat_z);
-
   // up
   if (quat_x > 0.35 && quat_y < 0.35 && quat_y > -0.35 && quat_z < 0.35 && quat_z > -0.35) {
     Serial.println("up");
@@ -388,6 +368,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = 0;
     packageJSON["dY"] = 0;
     packageJSON["dZ"] = 0.01;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
@@ -400,6 +384,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = 0;
     packageJSON["dY"] = 0;
     packageJSON["dZ"] = -0.01;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
@@ -412,6 +400,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = 0;
     packageJSON["dY"] = 0.01;
     packageJSON["dZ"] = 0;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
@@ -424,6 +416,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = 0;
     packageJSON["dY"] = -0.01;
     packageJSON["dZ"] = 0;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
@@ -436,6 +432,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = 0.01;
     packageJSON["dY"] = 0;
     packageJSON["dZ"] = 0;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
@@ -448,6 +448,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = -0.01;
     packageJSON["dY"] = 0;
     packageJSON["dZ"] = 0;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
@@ -460,6 +464,10 @@ void sendMQTTGyro(){
     packageJSON["dX"] = 0;
     packageJSON["dY"] = 0;
     packageJSON["dZ"] = 0;
+    packageJSON["f1"] = finger0;
+    packageJSON["f2"] = finger1;
+    packageJSON["f3"] = finger2;
+    packageJSON["f4"] = finger3;
     String packageString = JSON.stringify(packageJSON);
 
     mqtt.publish("KMITL-02/arm", packageString.c_str());
